@@ -1,7 +1,7 @@
 # Uni3C
 [Preprint] Uni3C: Unifying Precisely 3D-Enhanced Camera and Human Motion Controls for Video Generation
 
-<a href='https://arxiv.org/abs/'>
+<a href='https://arxiv.org/abs/2504.14899'>
 <img src='https://img.shields.io/badge/Arxiv-red'></a> 
 <a href='https://ewrfcas.github.io/Uni3C/'>
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
