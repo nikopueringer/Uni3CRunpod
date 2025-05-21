@@ -7,7 +7,7 @@
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
 ## News
-- **2025-05-21**: Release inference code and models of PCDController.
+- **2025-05-21**: Release inference code of PCDController. Models will be released soon!
 
 ## TODO List
 - [x] Camera control inference code
