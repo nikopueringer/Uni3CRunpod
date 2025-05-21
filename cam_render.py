@@ -59,7 +59,6 @@ def main():
     print("Init mask model")
     seg_net = TracerUniversalB7(device=device, batch_size=1,
                                 model_path=hf_hub_download(repo_id="Carve/tracer_b7", filename="tracer_b7.pth")).eval()
-    # seg_net = TracerUniversalB7(device=device, batch_size=1, model_path="./check_points/tracer_b7.pth").eval()
 
     # == motion definition ==
     if args.traj_type == "custom":
