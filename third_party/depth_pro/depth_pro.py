@@ -48,7 +48,7 @@ class DepthProConfig:
 DEFAULT_MONODEPTH_CONFIG_DICT = DepthProConfig(
     patch_encoder_preset="dinov2l16_384",
     image_encoder_preset="dinov2l16_384",
-    checkpoint_uri=hf_hub_download(repo_id="ewrfcas/Uni3C", filename="depth_pro.pt", repo_type="model"),
+    checkpoint_uri=hf_hub_download(repo_id="apple/DepthPro", filename="depth_pro.pt", repo_type="model"),
     decoder_features=256,
     use_fov_head=True,
     fov_encoder_preset="dinov2l16_384",
