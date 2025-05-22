@@ -7,13 +7,13 @@
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
 ## News
-- **2025-05-22**: Release model weights of PCDController.
+- **2025-05-22**: Release [model weights](https://huggingface.co/ewrfcas/Uni3C/tree/main) and [OOD benchmark](https://huggingface.co/datasets/ewrfcas/Uni3C) of PCDController.
 - **2025-05-21**: Release inference code of PCDController.
 
 ## TODO List
 - [x] Camera control inference code
 - [x] Model weights
-- [ ] Validation benchmark
+- [x] Validation benchmark
 - [ ] FSDP + Sequential parallel
 - [ ] Unified control inference code
 - [ ] Pose-EnvPoints alignment
@@ -97,6 +97,10 @@ You should achieve results as below:
 | Reference                                     | Render (stage1)                         | Result (stage2)                         |
 |-----------------------------------------------|-----------------------------------------|-----------------------------------------|
 | ![Reference IMG](./data/assets/reference.jpg) | ![Render GIF](./data/assets/render.gif) | ![Result GIF](./data/assets/result.gif) |
+
+### Benchmark
+
+You could download validation images and prompts from this [link](https://huggingface.co/datasets/ewrfcas/Uni3C).
 
 ## Cite
 If you found our project helpful, please consider citing:
