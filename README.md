@@ -108,6 +108,13 @@ You should achieve results as below:
 |-----------------------------------------------|-----------------------------------------|-----------------------------------------|
 | ![Reference IMG](./data/assets/reference.jpg) | ![Render GIF](./data/assets/render.gif) | ![Result GIF](./data/assets/result.gif) |
 
+### Efficiency comparison
+| Methods                       | GPU memory (GB) | Time (min) |
+|-------------------------------|-----------------|------------|
+| H20*1 + offload               | 50.8*1          | ~20.0      |
+| H20*4 + SP + offload          | 53.7*4          | ~15.0      |
+| H20*4 + SP + FSDP (recommend) | 46.1*4          | <5.0       |
+
 ### Benchmark
 
 You could download validation images and prompts from this [link](https://huggingface.co/datasets/ewrfcas/Uni3C).
