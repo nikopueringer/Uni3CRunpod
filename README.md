@@ -98,7 +98,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 cam_control.py \
                       --render_path "outputs/demo_0" \
                       --output_path "outputs/demo_0/result_sp.mp4" \
                       --prompt "The video features a cartoonish bear sitting at a school desk in a classroom setting." \
-                      --sp_degree 4 \
+                      --enable_sp \
                       --fsdp
 ```
 

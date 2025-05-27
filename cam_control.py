@@ -28,8 +28,8 @@ if __name__ == '__main__':
     parser.add_argument("--render_path", default=None, type=str, required=True, help="the path of render folder")
     parser.add_argument("--output_path", default="result.mp4", type=str, help="output path")
     parser.add_argument("--nframe", default=81, type=int, help="Total number of frames")
-    parser.add_argument("--sp_degree", default=1, type=int, help="The size of the spatial parallelism in DiT")
     parser.add_argument("--fsdp", action="store_true", help="whether to use fsdp to save memory")
+    parser.add_argument("--enable_sp", action="store_true", help="whether to use SP inference")
     parser.add_argument("--prompt", default="This video describes a slow and stable camera movement with high quality and high definition.",
                         type=str, help="Prompt of the reference image")
     parser.add_argument("--max_area", default=480 * 768, type=int, help="Total pixel area of height * width")
@@ -54,14 +54,14 @@ if __name__ == '__main__':
     logger = create_logger(None)
     logger.info(f"World size: {world_size}")
 
-    if args.sp_degree > 1:
+    if args.enable_sp:
         from xfuser.core.distributed import (
             init_distributed_environment,
             initialize_model_parallel,
         )
 
         init_distributed_environment(rank=dist.get_rank(), world_size=dist.get_world_size())
-        initialize_model_parallel(sequence_parallel_degree=args.sp_degree, ulysses_degree=args.sp_degree)
+        initialize_model_parallel(sequence_parallel_degree=world_size, ulysses_degree=world_size)
 
     if dist.is_initialized():
         seed = [args.seed] if rank == 0 else [None]
@@ -75,25 +75,27 @@ if __name__ == '__main__':
     transformer = PCDController.from_pretrained(base_model_id, subfolder="transformer", controlnet_cfg=cfg.controlnet_cfg, torch_dtype=torch.bfloat16)
     logger.info("loading controlnet...")
     transformer.build_controlnet(model_path="controlnet.pth", logger=logger)
-    if args.sp_degree > 1:  # replace attention_processor for DiT
+    if args.enable_sp:  # replace attention_processor for DiT
         transformer.sp_size = get_sequence_parallel_world_size()
         for layer in transformer.controlnet.controlnet_blocks:
             layer.self_attn.processor.sp_size = get_sequence_parallel_world_size()
         for block in transformer.blocks:
             block.attn1.set_processor(WanAttnProcessorSP(sp_size=get_sequence_parallel_world_size()))
 
-    if args.sp_degree > 1 and args.fsdp:
+    if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
         transformer = shard_model(transformer, device_id=local_rank, model_type="wan")
+        # condition_embedder in diffusers has a bug, which is conflict to FSDP
         from src.fsdp import time_forward
+        transformer.condition_embedder.torch_dtype = torch.bfloat16
         transformer.condition_embedder.forward = types.MethodType(time_forward, transformer.condition_embedder)
         gc.collect()
         torch.cuda.empty_cache()
         logger.info("Finish warp DiT for FSDP...")
 
     text_encoder = UMT5EncoderModel.from_pretrained(base_model_id, subfolder="text_encoder", torch_dtype=torch.bfloat16)
-    if args.sp_degree > 1 and args.fsdp:
+    if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
         text_encoder = shard_model(text_encoder, device_id=local_rank, model_type="t5")
@@ -102,7 +104,7 @@ if __name__ == '__main__':
         logger.info("Finish warp T5 for FSDP...")
 
     image_clip = CLIPVisionModel.from_pretrained(base_model_id, subfolder="image_encoder", torch_dtype=torch.float32)
-    if args.sp_degree > 1 and args.fsdp:
+    if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
         image_clip = shard_model(image_clip, device_id=local_rank, model_type="clip")
@@ -111,7 +113,7 @@ if __name__ == '__main__':
         logger.info("Finish warp CLIP for FSDP...")
 
     vae = AutoencoderKLWan.from_pretrained(base_model_id, subfolder="vae", torch_dtype=torch.float32)
-    if args.sp_degree > 1 and args.fsdp:
+    if args.enable_sp and args.fsdp:
         vae = vae.to(device)
 
     pipe = PCDControllerPipeline(
@@ -125,8 +127,8 @@ if __name__ == '__main__':
     )
 
     # replace this with pipe.to("cuda") if you have sufficient VRAM
-    if args.sp_degree == 1 or not args.fsdp:
-        # pipe.to("cuda")  # single GPU 49410M, FSDP 4GPUs 25880M
+    if not args.enable_sp or not args.fsdp:
+        # pipe.to("cuda")
         pipe.enable_model_cpu_offload(gpu_id=local_rank, device="cuda")
 
     image, render_video, render_mask, camera_embedding, height, width = load_dataset(
@@ -137,7 +139,7 @@ if __name__ == '__main__':
         pipe=pipe,
         use_camera_embedding=cfg.get("camera_embedding", False),
         device=device,
-        sp_degree=args.sp_degree,
+        sp_degree=get_sequence_parallel_world_size(),
         logger=logger
     )
 
