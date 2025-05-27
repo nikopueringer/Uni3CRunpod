@@ -11,12 +11,16 @@ from src.camera import get_camera_embedding
 from src.utils import load_video
 
 
-def load_dataset(reference_image, render_path, nframe, max_area, pipe, use_camera_embedding, device):
+def load_dataset(reference_image, render_path, nframe, max_area, pipe, use_camera_embedding,
+                 device, sp_degree=1, logger=None):
     image = Image.open(reference_image)
     aspect_ratio = image.height / image.width
     mod_value = pipe.vae_scale_factor_spatial * pipe.transformer.config.patch_size[1]
+    mod_value = mod_value * sp_degree
     height = round(np.sqrt(max_area * aspect_ratio)) // mod_value * mod_value
     width = round(np.sqrt(max_area / aspect_ratio)) // mod_value * mod_value
+    if logger is not None:
+        logger.info(f"Resized image to {height}x{width}")
     image = image.resize((width, height))
 
     # load conditions

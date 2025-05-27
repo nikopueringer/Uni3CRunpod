@@ -1,9 +1,52 @@
+import logging
+import os
+
 import imageio
 import numpy as np
 import torch
+import torch.distributed as dist
 from PIL import Image
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import interp1d
+
+
+def is_distributed():
+    return os.environ.get("WORLD_SIZE", None) is not None
+
+
+def is_main_process():
+    return not is_distributed() or dist.get_rank() == 0
+
+
+def get_world_size():
+    if is_distributed():
+        return dist.get_world_size()
+    else:
+        return 1
+
+
+def create_logger(logging_dir=None):
+    """
+    Create a logger that writes to a log file and stdout.
+    """
+    if is_main_process():  # real logger
+        additional_args = dict()
+        if logging_dir is not None:
+            additional_args["handlers"] = [
+                logging.StreamHandler(),
+                logging.FileHandler(f"{logging_dir}/log.txt"),
+            ]
+        logging.basicConfig(
+            level=logging.INFO,
+            format="[\033[34m%(asctime)s\033[0m] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            **additional_args,
+        )
+        logger = logging.getLogger(__name__)
+    else:  # dummy logger (does nothing)
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+    return logger
 
 
 def load_video(video_path):

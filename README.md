@@ -7,6 +7,7 @@
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
 ## News
+- **2025-05-27**: We support FSDP and sequential parallel inference with multiple GPUs (`pip install xfuser[flash-attn]`).
 - **2025-05-22**: Release [model weights](https://huggingface.co/ewrfcas/Uni3C/tree/main) and [OOD benchmark](https://huggingface.co/datasets/ewrfcas/Uni3C) of PCDController.
 - **2025-05-21**: Release inference code of PCDController.
 
@@ -14,7 +15,7 @@
 - [x] Camera control inference code
 - [x] Model weights
 - [x] Validation benchmark
-- [ ] FSDP + Sequential parallel
+- [x] FSDP + Sequential parallel
 - [ ] Unified control inference code
 - [ ] Pose-EnvPoints alignment
 
@@ -85,11 +86,20 @@ CUDA_VISIBLE_DEVICES=0 python cam_control.py \
                       --prompt "The video features a cartoonish bear sitting at a school desk in a classroom setting."
                       
                       
-CUDA_VISIBLE_DEVICES=1 python cam_control.py \
+CUDA_VISIBLE_DEVICES=0 python cam_control.py \
                       --reference_image "data/demo/flux-1.png" \
                       --render_path "outputs/demo_1" \
                       --output_path "outputs/demo_1/result.mp4" \
                       --prompt "The video features a living room."
+                      
+# for faster FSDP + Sequential parallel inference with 4 GPUs
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 cam_control.py \
+                      --reference_image "data/demo/flux-0.png" \
+                      --render_path "outputs/demo_0" \
+                      --output_path "outputs/demo_0/result_sp.mp4" \
+                      --prompt "The video features a cartoonish bear sitting at a school desk in a classroom setting." \
+                      --sp_degree 4 \
+                      --fsdp
 ```
 
 You should achieve results as below:

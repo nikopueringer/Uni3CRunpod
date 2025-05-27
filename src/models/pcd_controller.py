@@ -1,13 +1,16 @@
-from typing import Any, Dict, Optional, Tuple, Union
 import os
+from typing import Any, Dict, Optional, Tuple, Union
+
 import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from diffusers.models.modeling_outputs import Transformer2DModelOutput
 from diffusers.models.transformers.transformer_wan import WanTransformer3DModel, WanRotaryPosEmbed
 from diffusers.utils import USE_PEFT_BACKEND, logging, scale_lora_layers, unscale_lora_layers
-from diffusers.models.modeling_outputs import Transformer2DModelOutput
 from huggingface_hub import hf_hub_download
+from xfuser.core.distributed import get_sequence_parallel_rank, get_sp_group
+
 from src.models.controlnet import zero_module, WanXControlNet
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
@@ -82,8 +85,9 @@ class PCDController(WanTransformer3DModel):
         self.in_channels = in_channels
         self.patch_size = patch_size
         self.rope_max_seq_len = rope_max_seq_len
+        self.sp_size = 1
 
-    def build_controlnet(self, model_path):
+    def build_controlnet(self, model_path, logger=None):
         # controlnet
         self.controlnet_patch_embedding = nn.Conv3d(
             self.in_channels, self.controlnet_cfg.conv_out_dim, kernel_size=self.patch_size, stride=self.patch_size
@@ -93,14 +97,16 @@ class PCDController(WanTransformer3DModel):
         self.controlnet_rope = WanRotaryPosEmbed(self.controlnet_cfg.dim // self.controlnet_cfg.num_heads,
                                                  self.patch_size, self.rope_max_seq_len)
 
-        if not os.path.exists(model_path): # download weights from huggingface
+        if not os.path.exists(model_path):  # download weights from huggingface
             model_path = hf_hub_download(repo_id="ewrfcas/Uni3C", filename=model_path, repo_type="model")
         state_dict = torch.load(model_path, map_location="cpu")
 
         missing_keys, unexpected_keys = self.load_state_dict(state_dict, strict=False)
         # print("Missing keys:", missing_keys)
-        print("Unexpected keys:", unexpected_keys)
-
+        if logger is not None:
+            logger.info(f"Unexpected keys: {unexpected_keys}")
+        else:
+            print("Unexpected keys:", unexpected_keys)
 
     def forward(
             self,
@@ -169,11 +175,22 @@ class PCDController(WanTransformer3DModel):
             encoder_hidden_states = torch.concat([encoder_hidden_states_image, encoder_hidden_states], dim=1)
 
         ### controlnet encoding ###
+        if self.sp_size > 1:
+            assert controlnet_inputs.shape[1] % self.sp_size == 0
+            controlnet_inputs = torch.chunk(controlnet_inputs, self.sp_size, dim=1)[get_sequence_parallel_rank()]
+            controlnet_rotary_emb = torch.chunk(controlnet_rotary_emb, self.sp_size, dim=2)[get_sequence_parallel_rank()]
+
         with torch.autocast("cuda", dtype=self.dtype, enabled=True):
             controlnet_states = self.controlnet(hidden_states=controlnet_inputs,
                                                 temb=temb,
                                                 rotary_emb=controlnet_rotary_emb)
         ### controlnet encoding over ###
+
+        ### sp
+        if self.sp_size > 1:
+            assert hidden_states.shape[1] % self.sp_size == 0
+            hidden_states = torch.chunk(hidden_states, self.sp_size, dim=1)[get_sequence_parallel_rank()]
+            rotary_emb = torch.chunk(rotary_emb, self.sp_size, dim=2)[get_sequence_parallel_rank()]
 
         # 4. Transformer blocks
         if torch.is_grad_enabled() and self.gradient_checkpointing:
@@ -202,6 +219,9 @@ class PCDController(WanTransformer3DModel):
 
         hidden_states = (self.norm_out(hidden_states.float()) * (1 + scale) + shift).type_as(hidden_states)
         hidden_states = self.proj_out(hidden_states)
+
+        if self.sp_size > 1:
+            hidden_states = get_sp_group().all_gather(hidden_states, dim=1)
 
         hidden_states = hidden_states.reshape(
             batch_size, post_patch_num_frames, post_patch_height, post_patch_width, p_t, p_h, p_w, -1
