@@ -148,7 +148,7 @@ You should achieve results as below:
 |------------------------------------------------|--------------------------------------------------|---------------------------------------------------|
 | ![Reference IMG](./data/assets/reference2.jpg) | ![Target video GIF](./data/assets/tar_video.gif) | ![Aligned video GIF](./data/assets/res_video.gif) |
 
-### Benchmark
+## Benchmark
 
 You could download validation images and prompts from this [link](https://huggingface.co/datasets/ewrfcas/Uni3C).
 
