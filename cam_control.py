@@ -1,7 +1,6 @@
 import argparse
 import gc
 import os
-import types
 
 import torch
 import torch.distributed as dist
@@ -85,11 +84,7 @@ if __name__ == '__main__':
     if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
-        transformer = shard_model(transformer, device_id=local_rank, model_type="wan")
-        # condition_embedder in diffusers has a bug, which is conflict to FSDP
-        from src.fsdp import time_forward
-        transformer.condition_embedder.torch_dtype = torch.bfloat16
-        transformer.condition_embedder.forward = types.MethodType(time_forward, transformer.condition_embedder)
+        transformer = shard_model(transformer, device_id=local_rank, model_type="wan", use_orig_params=True)
         gc.collect()
         torch.cuda.empty_cache()
         logger.info("Finish warp DiT for FSDP...")
@@ -98,7 +93,7 @@ if __name__ == '__main__':
     if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
-        text_encoder = shard_model(text_encoder, device_id=local_rank, model_type="t5")
+        text_encoder = shard_model(text_encoder, device_id=local_rank, model_type="t5", use_orig_params=True)
         gc.collect()
         torch.cuda.empty_cache()
         logger.info("Finish warp T5 for FSDP...")
@@ -107,7 +102,7 @@ if __name__ == '__main__':
     if args.enable_sp and args.fsdp:
         if dist.is_initialized():
             dist.barrier()
-        image_clip = shard_model(image_clip, device_id=local_rank, model_type="clip")
+        image_clip = shard_model(image_clip, device_id=local_rank, model_type="clip", use_orig_params=True)
         gc.collect()
         torch.cuda.empty_cache()
         logger.info("Finish warp CLIP for FSDP...")

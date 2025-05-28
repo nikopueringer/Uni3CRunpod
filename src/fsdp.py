@@ -16,6 +16,7 @@ def shard_model(
         process_group=None,
         sharding_strategy=ShardingStrategy.FULL_SHARD,
         sync_module_states=True,
+        use_orig_params=False,  # this should only be "True" for inference
         model_type="wan"
 ):
     model = model.to(torch.float32)
@@ -40,27 +41,6 @@ def shard_model(
             reduce_dtype=reduce_dtype,
             buffer_dtype=buffer_dtype),
         device_id=device_id,
-        sync_module_states=sync_module_states)
+        sync_module_states=sync_module_states,
+        use_orig_params=use_orig_params)
     return model
-
-
-def time_forward(
-        self,
-        timestep: torch.Tensor,
-        encoder_hidden_states: torch.Tensor,
-        encoder_hidden_states_image=None,
-):
-    timestep = self.timesteps_proj(timestep)
-
-    # time_embedder_dtype = next(iter(self.time_embedder.parameters())).dtype
-    # if timestep.dtype != time_embedder_dtype and time_embedder_dtype != torch.int8:
-    #     timestep = timestep.to(time_embedder_dtype)
-    with torch.autocast(device_type="cuda", dtype=self.torch_dtype, enabled=True):
-        temb = self.time_embedder(timestep).type_as(encoder_hidden_states)
-    timestep_proj = self.time_proj(self.act_fn(temb))
-
-    encoder_hidden_states = self.text_embedder(encoder_hidden_states)
-    if encoder_hidden_states_image is not None:
-        encoder_hidden_states_image = self.image_embedder(encoder_hidden_states_image)
-
-    return temb, timestep_proj, encoder_hidden_states, encoder_hidden_states_image
