@@ -132,7 +132,9 @@ Run these codes for the alignment. Camera parameters are detailed above.
 cd third_party/GVHMR_realisdance
 python extract_pose.py --video "../../data/demo_uni3c/video.mp4" \
                        --output_root "../../outputs/demo_uni3c"
-cd ../..
+                       
+# back to the main path (Uni3C)                      
+cd ../.. 
 
 python alignment.py --input_image "data/demo_uni3c/reference.png" \
                     --input_path "outputs/demo_uni3c" \
