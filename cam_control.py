@@ -134,7 +134,7 @@ if __name__ == '__main__':
         pipe=pipe,
         use_camera_embedding=cfg.get("camera_embedding", False),
         device=device,
-        sp_degree=get_sequence_parallel_world_size(),
+        sp_degree=get_sequence_parallel_world_size() if args.enable_sp else 1,
         logger=logger
     )
 
