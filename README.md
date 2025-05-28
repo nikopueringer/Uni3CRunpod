@@ -7,6 +7,7 @@
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
 ## News
+- **2025-05-28**: We updated codes of alignment for human pose and world point clouds.
 - **2025-05-27**: We support FSDP and sequential parallel inference with multiple GPUs (`pip install xfuser[flash-attn]`).
 - **2025-05-22**: Release [model weights](https://huggingface.co/ewrfcas/Uni3C/tree/main) and [OOD benchmark](https://huggingface.co/datasets/ewrfcas/Uni3C) of PCDController.
 - **2025-05-21**: Release inference code of PCDController.
@@ -161,4 +162,4 @@ If you found our project helpful, please consider citing:
 ```
 
 ## Acknowledgements
-Our codes are built upon [RealisDance-DiT](https://github.com/damo-cv/RealisDance), [Depth-Pro](https://github.com/apple/ml-depth-pro), [ViewCrafter](https://github.com/Drexubery/ViewCrafter), and [diffusers](https://github.com/huggingface/diffusers).
+Our codes are built upon [RealisDance-DiT](https://github.com/damo-cv/RealisDance), [Depth-Pro](https://github.com/apple/ml-depth-pro), [ViewCrafter](https://github.com/Drexubery/ViewCrafter), [GVHMR](https://github.com/zju3dv/GVHMR), [GeoCalib](https://github.com/cvg/GeoCalib), [Wan2.1](https://github.com/Wan-Video/Wan2.1) and [diffusers](https://github.com/huggingface/diffusers).
