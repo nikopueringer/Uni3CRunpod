@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument("--prompt", default="This video describes a slow and stable camera movement with high quality and high definition.",
                         type=str, help="Prompt of the reference image")
     parser.add_argument("--max_area", default=480 * 768, type=int, help="Total pixel area of height * width")
-    parser.add_argument("--seed", default=42, type=int, help="random seed")
+    parser.add_argument("--seed", default=1024, type=int, help="random seed")
     args = parser.parse_args()
 
     rank = int(os.getenv("RANK", 0))
