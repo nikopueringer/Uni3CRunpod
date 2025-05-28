@@ -8,6 +8,7 @@ import torch.distributed as dist
 from PIL import Image
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import interp1d
+from scipy.spatial.transform import Rotation
 
 
 def is_distributed():
@@ -240,3 +241,23 @@ def build_cameras(cam_traj, w2c_0, c2w_0, intrinsic, nframe, focal_length,
     c2ws = torch.stack(c2ws, dim=0)
 
     return w2cs, c2ws, intrinsic
+
+def rotation_matrix_from_vectors(v1, v2):
+    v1 = v1 / np.linalg.norm(v1)
+    v2 = v2 / np.linalg.norm(v2)
+
+    cross_product = np.cross(v1, v2)
+    dot_product = np.dot(v1, v2)
+    angle = np.arccos(dot_product)
+
+    # special issue
+    if np.linalg.norm(cross_product) < 1e-10:  # if is parallel
+        if dot_product > 0:
+            return np.eye(3)
+        else:
+            arbitrary_axis = np.array([1, 0, 0]) if np.all(v1 != np.array([1, 0, 0])) else np.array([0, 1, 0])
+            return Rotation.from_rotvec(np.pi * arbitrary_axis).as_matrix()
+
+    # Rodrigues formula to get rotation
+    r = Rotation.from_rotvec(angle * cross_product / np.linalg.norm(cross_product))
+    return r.as_matrix()

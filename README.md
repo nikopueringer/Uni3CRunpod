@@ -16,12 +16,13 @@
 - [x] Model weights
 - [x] Validation benchmark
 - [x] FSDP + Sequential parallel
+- [x] HumanPose-WorldPointClouds alignment
 - [ ] Unified control inference code
-- [ ] Pose-EnvPoints alignment
 
 ## Setup
 
 ```
+# setup for camera control
 git clone https://github.com/ewrfcas/Uni3C.git
 cd Uni3C
 
@@ -35,6 +36,12 @@ pip install carvekit --no-deps
 # install pytorch3d
 git clone https://github.com/facebookresearch/pytorch3d.git
 cd pytorch3d && pip install -e .
+
+# setup for alignment
+cd third_party/GVHMR_realisdance
+bash install.sh
+cd ../GeoCalib && pip install -e .
+cd ../..
 ```
 
 ## Camera control inference
@@ -114,6 +121,29 @@ You should achieve results as below:
 | H20*1 + offload               | 50.8*1          | ~20.0      |
 | H20*4 + SP + offload          | 53.7*4          | ~15.0      |
 | H20*4 + SP + FSDP (recommend) | 46.1*4          | <5.0       |
+
+## Human pose & Alignment
+
+Run these codes for the alignment. Camera parameters are detailed above.
+
+```
+# run for pose extraction (ensure you are in the path of 'third_party/GVHMR_realisdance')
+cd third_party/GVHMR_realisdance
+python extract_pose.py --video "../../data/demo_uni3c/video.mp4" \
+                       --output_root "../../outputs/demo_uni3c"
+cd ../..
+
+python alignment.py --input_image "data/demo_uni3c/reference.png" \
+                    --input_path "outputs/demo_uni3c" \
+                    --output_path "outputs/demo_uni3c_aligned" \
+                    --traj_type "free1"
+```
+
+You should achieve results as below:
+
+| Reference image                                | Target video                                     | Aligned video                                     |
+|------------------------------------------------|--------------------------------------------------|---------------------------------------------------|
+| ![Reference IMG](./data/assets/reference2.jpg) | ![Target video GIF](./data/assets/tar_video.gif) | ![Aligned video GIF](./data/assets/res_video.gif) |
 
 ### Benchmark
 
