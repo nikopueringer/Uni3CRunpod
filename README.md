@@ -7,6 +7,7 @@
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
 ## News
+- **2025-05-30**: We updated codes for unified inference.
 - **2025-05-28**: We updated codes of alignment for human pose and world point clouds.
 - **2025-05-27**: We support FSDP and sequential parallel inference with multiple GPUs (`pip install xfuser[flash-attn]`).
 - **2025-05-22**: Release [model weights](https://huggingface.co/ewrfcas/Uni3C/tree/main) and [OOD benchmark](https://huggingface.co/datasets/ewrfcas/Uni3C) of PCDController.
@@ -18,7 +19,7 @@
 - [x] Validation benchmark
 - [x] FSDP + Sequential parallel
 - [x] HumanPose-WorldPointClouds alignment
-- [ ] Unified control inference code
+- [x] Unified control inference code
 
 ## Setup
 
@@ -123,9 +124,9 @@ You should achieve results as below:
 | H20*4 + SP + offload          | 53.7*4          | ~15.0      |
 | H20*4 + SP + FSDP (recommend) | 46.1*4          | <5.0       |
 
-## Human pose & Alignment
+## Human pose & Alignment & Unified control
 
-Run these codes for the alignment. Camera parameters are detailed above.
+Run these codes for the pre-processing (extracting pose + alignment). Camera parameters are detailed above.
 
 ```
 # run for pose extraction (ensure you are in the path of 'third_party/GVHMR_realisdance')
@@ -142,11 +143,30 @@ python alignment.py --input_image "data/demo_uni3c/reference.png" \
                     --traj_type "free1"
 ```
 
+Run these code for the inference of Uni3C
+
+```
+# Sngle GPU inference
+python uni3c_inference.py --reference_image "data/demo_uni3c/reference.png" \
+                          --render_path "outputs/demo_uni3c_aligned" \
+                          --output_path "outputs/demo_uni3c_aligned/result.mp4" \
+                          --prompt "A woman with curly hair, dressed in a dark hoodie and black pants, dances energetically on a sidewalk in front of a well-maintained building with large arched windows. The building, with a light-colored facade, is surrounded by lush green trees and bushes, creating a serene urban park setting. The woman's movements are rhythmic and dynamic, with her arms and legs in motion, adding a lively element to the tranquil environment. The sidewalk, made of gray rectangular paving stones, is bordered by a curb and runs parallel to the building. In the background, there are outdoor seating areas with black umbrellas and tables, and a few cars are parked near the building. The overall scene is vibrant and realistic, capturing a moment of urban leisure and nature."
+                          
+# Multiple GPU inference
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 uni3c_inference.py \
+                                      --reference_image "data/demo_uni3c/reference.png" \
+                                      --render_path "outputs/demo_uni3c_aligned" \
+                                      --output_path "outputs/demo_uni3c_aligned/result.mp4" \
+                                      --prompt "A woman with curly hair, dressed in a dark hoodie and black pants, dances energetically on a sidewalk in front of a well-maintained building with large arched windows. The building, with a light-colored facade, is surrounded by lush green trees and bushes, creating a serene urban park setting. The woman's movements are rhythmic and dynamic, with her arms and legs in motion, adding a lively element to the tranquil environment. The sidewalk, made of gray rectangular paving stones, is bordered by a curb and runs parallel to the building. In the background, there are outdoor seating areas with black umbrellas and tables, and a few cars are parked near the building. The overall scene is vibrant and realistic, capturing a moment of urban leisure and nature." \
+                                      --enable_sp
+
+```
+
 You should achieve results as below:
 
-| Reference image                                | Target video                                     | Aligned video                                     |
-|------------------------------------------------|--------------------------------------------------|---------------------------------------------------|
-| ![Reference IMG](./data/assets/reference2.jpg) | ![Target video GIF](./data/assets/tar_video.gif) | ![Aligned video GIF](./data/assets/res_video.gif) |
+| Reference image                                | Target video                                     | Aligned video                                     | Uni3C result                                  |
+|------------------------------------------------|--------------------------------------------------|---------------------------------------------------|-----------------------------------------------|
+| ![Reference IMG](./data/assets/reference2.jpg) | ![Target video GIF](./data/assets/tar_video.gif) | ![Aligned video GIF](./data/assets/res_video.gif) | ![Final video GIF](./data/assets/result2.gif) |
 
 ## Benchmark
 

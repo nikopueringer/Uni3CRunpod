@@ -492,7 +492,7 @@ if __name__ == '__main__':
         mask_video.append(Image.fromarray(render_mask))
 
     export_to_video(video, output_video_path=f"{args.output_path}/combined_render.mp4", fps=new_fps)
-    export_to_video(env_video, output_video_path=f"{args.output_path}/env_render.mp4", fps=new_fps)
+    export_to_video(env_video, output_video_path=f"{args.output_path}/render.mp4", fps=new_fps)
     export_to_video(smpl_video, output_video_path=f"{args.output_path}/smpl_render.mp4", fps=new_fps)
     export_to_video(hand_refined_video, output_video_path=f"{args.output_path}/hand_render.mp4", fps=new_fps)
-    export_to_video(mask_video, output_video_path=f"{args.output_path}/mask_render.mp4", fps=new_fps)
+    export_to_video(mask_video, output_video_path=f"{args.output_path}/render_mask.mp4", fps=new_fps)

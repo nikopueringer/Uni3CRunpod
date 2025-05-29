@@ -12,7 +12,7 @@ from src.utils import load_video
 
 
 def load_dataset(reference_image, render_path, nframe, max_area, pipe, use_camera_embedding,
-                 device, sp_degree=1, logger=None):
+                 device, sp_degree=1, logger=None, load_human_info=False):
     image = Image.open(reference_image)
     aspect_ratio = image.height / image.width
     mod_value = pipe.vae_scale_factor_spatial * pipe.transformer.config.patch_size[1]
@@ -50,4 +50,16 @@ def load_dataset(reference_image, render_path, nframe, max_area, pipe, use_camer
     else:
         camera_embedding = None
 
-    return image, render_video, render_mask, camera_embedding, height, width
+    if not load_human_info:
+        return image, render_video, render_mask, camera_embedding, height, width
+    else:
+        smpl_frames = load_video(f"{render_path}/smpl_render.mp4")
+        smpl_video = torch.stack([ToTensor()(frame) for frame in smpl_frames], dim=0) * 2 - 1.0  # [f,c,h,w]
+        smpl_video = F.interpolate(smpl_video, size=(height, width), mode='bicubic')[None]
+        smpl_video = torch.clip(smpl_video, -1, 1)  # [-1~1], [1,f,c,h,w]
+        hand_frames = load_video(f"{render_path}/hand_render.mp4")
+        hand_video = torch.stack([ToTensor()(frame) for frame in hand_frames], dim=0) * 2 - 1.0  # [f,c,h,w]
+        hand_video = F.interpolate(hand_video, size=(height, width), mode='bicubic')[None]
+        hand_video = torch.clip(hand_video, -1, 1)  # [-1~1], [1,f,c,h,w]
+
+        return image, render_video, render_mask, camera_embedding, smpl_video, hand_video, height, width

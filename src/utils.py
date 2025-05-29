@@ -9,6 +9,35 @@ from PIL import Image
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import interp1d
 from scipy.spatial.transform import Rotation
+import random
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def get_world_size():
+    if dist.is_initialized():
+        return dist.get_world_size()
+    else:
+        return int(os.environ.get("WORLD_SIZE", 1))
+
+
+def get_rank():
+    if dist.is_initialized():
+        return dist.get_rank()
+    else:
+        return int(os.environ.get("RANK", 0))
+
+
+def get_local_rank():
+    if torch.cuda.device_count() == 0:
+        print("WARNING: No available GPU.")
+        return 0
+    return get_rank() % torch.cuda.device_count()
 
 
 def is_distributed():
@@ -241,6 +270,7 @@ def build_cameras(cam_traj, w2c_0, c2w_0, intrinsic, nframe, focal_length,
     c2ws = torch.stack(c2ws, dim=0)
 
     return w2cs, c2ws, intrinsic
+
 
 def rotation_matrix_from_vectors(v1, v2):
     v1 = v1 / np.linalg.norm(v1)
