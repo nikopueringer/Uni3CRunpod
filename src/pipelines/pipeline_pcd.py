@@ -33,6 +33,7 @@ from diffusers.pipelines.wan.pipeline_output import WanPipelineOutput
 
 from src.models.pcd_controller import PCDController
 
+import ftfy
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -42,9 +43,6 @@ else:
     XLA_AVAILABLE = False
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
-
-if is_ftfy_available():
-    import ftfy
 
 EXAMPLE_DOC_STRING = """
     Examples:
