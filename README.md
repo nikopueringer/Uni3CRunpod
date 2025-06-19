@@ -1,25 +1,17 @@
 # Uni3C
 [Preprint] Uni3C: Unifying Precisely 3D-Enhanced Camera and Human Motion Controls for Video Generation
 
+Tweaked for Runpod
+-requirements.txt fixed missing dependencies ftfy and deco
+-add import ftfy to pcd pipeline
+-added handy runpod setup.sh
+
+original project links:
 <a href='https://arxiv.org/abs/2504.14899'>
 <img src='https://img.shields.io/badge/Arxiv-red'></a> 
 <a href='https://ewrfcas.github.io/Uni3C/'>
 <img src='https://img.shields.io/badge/Project-page-orange'></a> 
 
-## News
-- **2025-05-30**: We updated codes for unified inference.
-- **2025-05-28**: We updated codes of alignment for human pose and world point clouds.
-- **2025-05-27**: We support FSDP and sequential parallel inference with multiple GPUs (`pip install xfuser[flash-attn]`).
-- **2025-05-22**: Release [model weights](https://huggingface.co/ewrfcas/Uni3C/tree/main) and [OOD benchmark](https://huggingface.co/datasets/ewrfcas/Uni3C) of PCDController.
-- **2025-05-21**: Release inference code of PCDController.
-
-## TODO List
-- [x] Camera control inference code
-- [x] Model weights
-- [x] Validation benchmark
-- [x] FSDP + Sequential parallel
-- [x] HumanPose-WorldPointClouds alignment
-- [x] Unified control inference code
 
 ## Setup
 
